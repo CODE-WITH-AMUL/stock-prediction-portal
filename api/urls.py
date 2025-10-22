@@ -1,6 +1,7 @@
-from .views import index
+# stocks/urls.py
 from django.urls import path
+from . import views
 
-urlpatterns  = [
-    path('api/index', index, name='index'),
+urlpatterns = [
+    path('analyze/<str:ticker>/', views.analyze_stock_api, name='analyze_stock'),
 ]

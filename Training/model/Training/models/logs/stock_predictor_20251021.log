@@ -1,0 +1,49 @@
+Downloading AAPL …
+Training 1_Day …
+Crash
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\AppData\Local\Temp\ipykernel_11392\3881736539.py", line 395, in <module>
+    main()
+  File "C:\Users\Lenovo\AppData\Local\Temp\ipykernel_11392\3881736539.py", line 390, in main
+    CLI(cfg).run()
+  File "C:\Users\Lenovo\AppData\Local\Temp\ipykernel_11392\3881736539.py", line 350, in run
+    preds = self.pipe.run(ticker, retrain=retrain)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Lenovo\AppData\Local\Temp\ipykernel_11392\3881736539.py", line 261, in run
+    self.mdl.train(X, y, horizon)
+  File "C:\Users\Lenovo\AppData\Local\Temp\ipykernel_11392\3881736539.py", line 223, in train
+    "rmse": mean_squared_error(y_test, pred, squared=False),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Lenovo\AppData\Local\Programs\Python\Python312\Lib\site-packages\sklearn\utils\_param_validation.py", line 196, in wrapper
+    params = func_sig.bind(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Lenovo\AppData\Local\Programs\Python\Python312\Lib\inspect.py", line 3273, in bind
+    return self._bind(args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Lenovo\AppData\Local\Programs\Python\Python312\Lib\inspect.py", line 3262, in _bind
+    raise TypeError(
+TypeError: got an unexpected keyword argument 'squared'
+Training 1_Day …
+Crash
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\AppData\Local\Temp\ipykernel_11392\3912049143.py", line 395, in <module>
+    main()
+  File "C:\Users\Lenovo\AppData\Local\Temp\ipykernel_11392\3912049143.py", line 390, in main
+    CLI(cfg).run()
+  File "C:\Users\Lenovo\AppData\Local\Temp\ipykernel_11392\3912049143.py", line 350, in run
+    preds = self.pipe.run(ticker, retrain=retrain)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Lenovo\AppData\Local\Temp\ipykernel_11392\3912049143.py", line 261, in run
+    self.mdl.train(X, y, horizon)
+  File "C:\Users\Lenovo\AppData\Local\Temp\ipykernel_11392\3912049143.py", line 223, in train
+    "rmse": mean_squared_error(y_test, pred, squared=False),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Lenovo\AppData\Local\Programs\Python\Python312\Lib\site-packages\sklearn\utils\_param_validation.py", line 196, in wrapper
+    params = func_sig.bind(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Lenovo\AppData\Local\Programs\Python\Python312\Lib\inspect.py", line 3273, in bind
+    return self._bind(args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Lenovo\AppData\Local\Programs\Python\Python312\Lib\inspect.py", line 3262, in _bind
+    raise TypeError(
+TypeError: got an unexpected keyword argument 'squared'
