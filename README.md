@@ -58,5 +58,5 @@ python manage.py runserver
 ## ML Model Pridcution 
 Below is a visual representation of how the Machine Learning Model processes and predicts stock data:
 
-![ML Model Workflow](https://github.com/CODE-WITH-AMUL/stock-prediction-portal/media/img/image.png)
+![ML Model Workflow](https://github.com/CODE-WITH-AMUL/stock-prediction-portal//blob/main/media/img/image.png)
 
