@@ -1,7 +1,8 @@
-# stocks/urls.py
+# urls.py (add to your main urls.py)
 from django.urls import path
-from . import views
+from . import views  # assuming views.py in same app
 
 urlpatterns = [
-    path('analyze/<str:ticker>/', views.analyze_stock_api, name='analyze_stock'),
-]
+    # Search removed; only analysis endpoint
+    path('stocks/analyze/<str:ticker>/', views.analyze_stock, name='analyze_stock'),
+]   

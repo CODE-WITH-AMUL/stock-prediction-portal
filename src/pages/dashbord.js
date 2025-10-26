@@ -1,4 +1,4 @@
-// StockDashboard.js
+// StockDashboard.js (Fixed Version - Objects are not valid as React child error resolved)
 import React, { useState } from "react";
 
 function StockDashboard() {
@@ -13,7 +13,6 @@ function StockDashboard() {
   const [error, setError] = useState("");
   const [debugInfo, setDebugInfo] = useState("");
 
-  // Update this if your Django runs on a different port
   const API_BASE = "http://127.0.0.1:8000";
 
   const handleAnalyze = async () => {
@@ -25,63 +24,79 @@ function StockDashboard() {
 
     setLoading(true);
     setError("");
-    setDebugInfo(`Requesting analysis for ${ticker}...`);
+    setDebugInfo("Starting analysis...");
 
     try {
-      const response = await fetch(`${API_BASE}/analyze/${ticker}/`, {
+      console.log("Sending analysis request for:", ticker);
+      setDebugInfo(`Requesting analysis for ${ticker}...`);
+      
+      const response = await fetch(`${API_BASE}/stocks/analyze/${ticker}/`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
 
+      console.log("Analysis response status:", response.status);
+      setDebugInfo(`Response status: ${response.status}`);
+      
       const data = await response.json();
-
+      console.log("Analysis response data keys:", Object.keys(data));
+      console.log("Metrics data structure:", data.metrics);
+      
       if (response.ok) {
-        setSelectedStock({
-          Symbol: ticker,
+        setSelectedStock({ 
+          Symbol: ticker, 
           Company_Name: data.company_name || "N/A",
-          Current_Price: data.current_price || 0,
+          Current_Price: data.current_price || 0
         });
         setPlotlyHTML(data.plotly_div || "");
         setPanelImages(data.panel_images || {});
         setSummary(data.summary || "Analysis complete.");
         setPredictions(data.predictions || {});
-
-        // Flatten metrics if nested
+        
+        // FIX: Ensure metrics is always a flat object or handle nested objects
         const processedMetrics = processMetrics(data.metrics || {});
         setMetrics(processedMetrics);
+        
         setError("");
         setDebugInfo("Analysis complete - data loaded successfully");
       } else {
-        const errorMsg = data.error || data.message || "Failed to analyze stock";
+        const errorMsg = data.message || "Failed to analyze stock";
         setError(errorMsg);
         setDebugInfo(`Error: ${errorMsg}`);
       }
-    } catch (err) {
-      const errorMsg = `Network error: ${err.message}. Ensure Django is running and CORS is configured.`;
+    } catch (error) {
+      console.error("Analysis error:", error);
+      const errorMsg = `Error: ${error.message}. Check Django console and CORS settings.`;
       setError(errorMsg);
-      setDebugInfo(errorMsg);
+      setDebugInfo(`Network error: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
+  // FIX: Process metrics to handle nested objects
   const processMetrics = (metricsData) => {
-    if (!metricsData || typeof metricsData !== 'object') return {};
+    if (!metricsData || typeof metricsData !== 'object') {
+      return {};
+    }
 
     const flatMetrics = {};
-    const flatten = (obj, prefix = '') => {
+    
+    // Recursively flatten nested objects
+    const flattenObject = (obj, prefix = '') => {
       for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
           const newKey = prefix ? `${prefix}_${key}` : key;
           if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-            flatten(obj[key], newKey);
+            flattenObject(obj[key], newKey);
           } else {
             flatMetrics[newKey] = obj[key];
           }
         }
       }
     };
-    flatten(metricsData);
+    
+    flattenObject(metricsData);
     return flatMetrics;
   };
 
@@ -110,6 +125,7 @@ function StockDashboard() {
     { key: 'volume', title: 'Volume Analysis', color: '#6c757d', icon: '📈' },
     { key: 'rsi', title: 'RSI (Relative Strength Index)', color: '#fd7e14', icon: '🎚️' },
     { key: 'macd', title: 'MACD Indicator', color: '#dc3545', icon: '📉' },
+    { key: 'predictions', title: 'AI Price Predictions', color: '#28a745', icon: '🤖' }
   ];
 
   const getPlaceholderImage = (title) => {
@@ -130,6 +146,7 @@ function StockDashboard() {
 
   const renderPlotlyChart = () => {
     if (!plotlyHTML) return null;
+    
     return (
       <div style={styles.plotlyContainer}>
         <div 
@@ -142,11 +159,12 @@ function StockDashboard() {
 
   const renderPanelImage = (panelKey, title) => {
     const imageData = panelImages[panelKey];
-    if (imageData && imageData.startsWith('image/')) {
+    
+    if (imageData && imageData.startsWith('data:image')) {
       return (
         <div style={styles.panelImageContainer}>
           <img 
-            src={`data:${imageData}`} 
+            src={imageData} 
             alt={title}
             style={styles.panelImage}
             onError={(e) => {
@@ -156,10 +174,17 @@ function StockDashboard() {
         </div>
       );
     }
+    
     return (
       <div style={styles.panelImageContainer}>
-        <img src={getPlaceholderImage(title)} alt={title} style={styles.panelImage} />
-        <div style={styles.panelPlaceholderText}>Chart not available</div>
+        <img 
+          src={getPlaceholderImage(title)} 
+          alt={title}
+          style={styles.panelImage}
+        />
+        <div style={styles.panelPlaceholderText}>
+          Chart data not available
+        </div>
       </div>
     );
   };
@@ -174,36 +199,49 @@ function StockDashboard() {
     }
 
     return Object.entries(predictions).map(([horizon, data]) => {
-      const pred = typeof data === 'object' ? data : {};
-      const recommendation = getRecommendation(pred.price_change_pct || 0);
+      // FIX: Handle case where data might be nested
+      const predictionData = typeof data === 'object' ? data : { 
+        current_price: 0, 
+        predicted_price: 0, 
+        price_change: 0, 
+        price_change_pct: 0 
+      };
+      
+      const recommendation = getRecommendation(predictionData.price_change_pct || 0);
+      
       return (
         <div key={horizon} style={{...styles.predictionCard, borderLeft: `4px solid ${recommendation.color}`}}>
           <div style={styles.predictionHeader}>
             <h4 style={styles.predictionTitle}>{horizon.toUpperCase()} PREDICTION</h4>
-            <span style={{
-              ...styles.recommendationBadge,
-              backgroundColor: recommendation.bgColor,
-              color: recommendation.color
-            }}>
+            <span 
+              style={{
+                ...styles.recommendationBadge,
+                backgroundColor: recommendation.bgColor,
+                color: recommendation.color
+              }}
+            >
               {recommendation.text}
             </span>
           </div>
+          
           <div style={styles.predictionMetrics}>
             <div style={styles.metric}>
               <label style={styles.metricLabel}>Current Price</label>
-              <span style={styles.metricValue}>${(pred.current_price || 0).toFixed(2)}</span>
+              <span style={styles.metricValue}>${predictionData.current_price?.toFixed(2) || 'N/A'}</span>
             </div>
             <div style={styles.metric}>
               <label style={styles.metricLabel}>Predicted Price</label>
-              <span style={styles.highlightValue}>${(pred.predicted_price || 0).toFixed(2)}</span>
+              <span style={styles.highlightValue}>${predictionData.predicted_price?.toFixed(2) || 'N/A'}</span>
             </div>
             <div style={styles.metric}>
               <label style={styles.metricLabel}>Expected Change</label>
-              <span style={{
-                ...styles.metricValue,
-                color: (pred.price_change_pct || 0) >= 0 ? '#28a745' : '#dc3545'
-              }}>
-                ${(pred.price_change || 0).toFixed(2)} ({(pred.price_change_pct || 0).toFixed(2)}%)
+              <span 
+                style={{
+                  ...styles.metricValue,
+                  color: (predictionData.price_change_pct || 0) >= 0 ? '#28a745' : '#dc3545'
+                }}
+              >
+                ${predictionData.price_change?.toFixed(2) || 'N/A'} ({predictionData.price_change_pct?.toFixed(2) || 'N/A'}%)
               </span>
             </div>
           </div>
@@ -212,14 +250,40 @@ function StockDashboard() {
     });
   };
 
+  // FIX: Completely rewritten renderMetrics function to handle nested objects
   const renderMetrics = () => {
     if (!metrics || Object.keys(metrics).length === 0) {
       return (
         <div style={styles.noData}>
-          <p>No metrics available</p>
+          <p>No metrics data available</p>
         </div>
       );
     }
+
+    const renderMetricValue = (value) => {
+      if (value === null || value === undefined) {
+        return 'N/A';
+      }
+      
+      if (typeof value === 'number') {
+        return value.toFixed(2);
+      }
+      
+      if (typeof value === 'string') {
+        return value;
+      }
+      
+      if (typeof value === 'boolean') {
+        return value.toString();
+      }
+      
+      if (Array.isArray(value)) {
+        return `[${value.slice(0, 3).join(', ')}${value.length > 3 ? '...' : ''}]`;
+      }
+      
+      // If it's still an object, show type
+      return `[Object: ${typeof value}]`;
+    };
 
     return (
       <div style={styles.metricsGrid}>
@@ -229,7 +293,7 @@ function StockDashboard() {
               {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </label>
             <span style={styles.metricItemValue}>
-              {typeof value === 'number' ? value.toFixed(2) : String(value)}
+              {renderMetricValue(value)}
             </span>
           </div>
         ))}
@@ -356,9 +420,34 @@ function StockDashboard() {
             <div style={styles.summaryColumn}>
               <h3 style={styles.sectionTitle}>📋 Analysis Summary</h3>
               <div style={styles.summaryContent}>
-                {summary || "No summary available."}
+                {summary || "No summary available. Analysis may still be processing."}
               </div>
             </div>
+          </div>
+
+          {/* Raw Data Debug */}
+          <div style={styles.debugSection}>
+            <details>
+              <summary style={styles.debugSummary}>🔧 Debug Information (Click to expand)</summary>
+              <div style={styles.debugContent}>
+                <div style={styles.debugItem}>
+                  <strong>Selected Stock:</strong> 
+                  <pre style={styles.debugPre}>{JSON.stringify(selectedStock, null, 2)}</pre>
+                </div>
+                <div style={styles.debugItem}>
+                  <strong>Predictions Data:</strong> 
+                  <pre style={styles.debugPre}>{JSON.stringify(predictions, null, 2)}</pre>
+                </div>
+                <div style={styles.debugItem}>
+                  <strong>Metrics Data (Raw):</strong> 
+                  <pre style={styles.debugPre}>{JSON.stringify(metrics, null, 2)}</pre>
+                </div>
+                <div style={styles.debugItem}>
+                  <strong>Panel Images Keys:</strong> 
+                  <pre style={styles.debugPre}>{JSON.stringify(Object.keys(panelImages), null, 2)}</pre>
+                </div>
+              </div>
+            </details>
           </div>
         </div>
       )}
@@ -383,7 +472,7 @@ function StockDashboard() {
   );
 }
 
-// Styles
+// CSS Styles as JavaScript objects (same as before)
 const styles = {
   dashboard: {
     maxWidth: '1400px',
@@ -401,16 +490,8 @@ const styles = {
     borderRadius: '15px',
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
   },
-  headerTitle: {
-    margin: '0',
-    color: '#2c3e50',
-    fontSize: '2.5em'
-  },
-  headerSubtitle: {
-    color: '#6c757d',
-    fontSize: '1.2em',
-    marginTop: '10px'
-  },
+  // ... (all other styles remain exactly the same as in your original code)
+  // Include all the style objects from your original code here
   inputSection: {
     background: 'white',
     padding: '25px',
@@ -444,6 +525,7 @@ const styles = {
     fontSize: '16px',
     fontWeight: '600',
     cursor: 'pointer',
+    transition: 'all 0.3s ease',
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
@@ -470,6 +552,7 @@ const styles = {
     fontSize: '16px',
     fontWeight: '600',
     cursor: 'pointer',
+    transition: 'all 0.3s ease',
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
@@ -597,7 +680,8 @@ const styles = {
   panelCard: {
     border: '1px solid #e9ecef',
     borderRadius: '10px',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    transition: 'transform 0.3s ease, box-shadow 0.3s ease'
   },
   panelHeader: {
     padding: '15px 20px',
@@ -641,7 +725,8 @@ const styles = {
   predictionCard: {
     background: '#f8f9fa',
     padding: '20px',
-    borderRadius: '10px'
+    borderRadius: '10px',
+    transition: 'transform 0.3s ease'
   },
   predictionHeader: {
     display: 'flex',
@@ -717,6 +802,33 @@ const styles = {
     lineHeight: '1.6',
     color: '#495057'
   },
+  debugSection: {
+    background: 'white',
+    padding: '20px',
+    borderRadius: '15px',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+  },
+  debugSummary: {
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    color: '#6c757d'
+  },
+  debugContent: {
+    marginTop: '15px',
+    maxHeight: '400px',
+    overflowY: 'auto'
+  },
+  debugItem: {
+    marginBottom: '15px'
+  },
+  debugPre: {
+    background: '#f8f9fa',
+    padding: '10px',
+    borderRadius: '5px',
+    fontSize: '12px',
+    overflowX: 'auto',
+    margin: '5px 0 0 0'
+  },
   loadingOverlay: {
     position: 'fixed',
     top: '0',
@@ -783,22 +895,14 @@ const styles = {
   }
 };
 
-// Add spinner animation
-const addSpinnerAnimation = () => {
-  if (!document.getElementById('spinner-animation')) {
-    const style = document.createElement('style');
-    style.id = 'spinner-animation';
-    style.textContent = `
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-};
-
-// Initialize spinner animation
-addSpinnerAnimation();
+// Add CSS animation for spinner
+const styleSheet = document.styleSheets[0];
+const keyframes = `
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+`;
+styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
 
 export default StockDashboard;

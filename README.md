@@ -1,3 +1,5 @@
+![Stock Analysis Banner](https://github.com/CODE-WITH-AMUL/stock-prediction-portal/img/Banner.png)
+
 # Stock Analysis Project
 
 A powerful and data-driven Stock Analysis Web Application built to analyze, visualize, and predict stock market performance using Python, Django, and Machine Learning.
@@ -26,7 +28,7 @@ Model Management	Joblib
 
 
 ## Installation
-'''
+```
 # Clone this repository
 git clone https://github.com/<your-username>/Stock-Analysis.git
 
@@ -44,5 +46,7 @@ pip install -r requirements.txt
 # Run Django server
 python manage.py runserver
 
+```
 
-'''
+
+## ML Model 
